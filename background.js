@@ -59,9 +59,9 @@ async function checkTextWithAI(text, genre = 'General') {
   if (depth === 1) {
     depthInstruction = 'Проверь ТОЛЬКО орфографические ошибки.';
   } else if (depth === 2) {
-    depthInstruction = 'Проверь орфографические и грамматические ошибки, пунктуацию.';
+    depthInstruction = 'Проверь орфографические и грамматические ошибки, пунктуацию и расстановку запятых.';
   } else {
-    depthInstruction = 'Найди ВСЕ виды ошибок: орфография, пунктуация, грамматика, тавтология, нарушение логики, стилистически неверные обороты.';
+    depthInstruction = 'Найди ВСЕ виды ошибок: орфография, пунктуация, грамматика, тавтология, нарушение логики, стилистически неверные обороты, пропущенные запятые перед обращениями.';
   }
 
   const prompt = settings.customPrompt || getDefaultPrompt(depthInstruction, genre);
@@ -137,7 +137,7 @@ async function checkTextWithAI(text, genre = 'General') {
  * Повторный запрос с более строгим промптом (fallback)
  */
 async function checkTextWithAIRetry(text, apiKey, model) {
-  const strictPrompt = `Проанализируй текст. Ответ ТОЛЬКО в этом формате JSON:
+  const strictPrompt = `Проанализируй текст. Ответ ТОЛЬКО в этом формате JSON, включая пунктуацию и знаки препинания:
 {"corrections": [{"start": 0, "end": 5, "wrong": "text", "suggestions": ["fix"], "reason": "rule"}]}`;
 
   try {

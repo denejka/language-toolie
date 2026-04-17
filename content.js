@@ -54,6 +54,7 @@ function initializeTextFields() {
 
     // Создаем контейнер для отрисовки ошибок
     createErrorOverlay(field);
+    createStatusIndicator(field);
   });
 }
 
@@ -79,6 +80,7 @@ function handleFieldInput(event) {
     } else {
       // Очищаем ошибки для короткого текста
       clearErrorsForField(field);
+      updateStatusIndicator(field);
     }
   }, 600);
 
@@ -96,6 +98,7 @@ function handleFieldFocus(event) {
   if (currentCorrections.has(selectedFieldId)) {
     showErrorHighlight(field);
   }
+  updateStatusIndicator(field);
 }
 
 /**
@@ -231,6 +234,8 @@ function showErrorHighlight(field) {
     // Для contenteditable используем inline decoration
     decorateContenteditable(field, corrections, text);
   }
+
+  updateStatusIndicator(field);
 }
 
 /**
@@ -352,7 +357,10 @@ function decorateContenteditable(field, corrections, text) {
     const span = document.createElement('span');
     span.textContent = text.substring(correction.start, correction.end);
     span.style.textDecoration = correction.type === 'logic' ? 'underline wavy #FFC107' : 'underline wavy #EF5350';
+    span.style.backgroundColor = correction.type === 'logic' ? 'rgba(255, 243, 205, 0.45)' : 'rgba(255, 235, 238, 0.7)';
+    span.style.borderRadius = '2px';
     span.style.cursor = 'pointer';
+    span.style.padding = '0 1px';
     span.title = correction.reason || 'Ошибка';
     span.dataset.correctionIndex = corrections.indexOf(correction);
     
@@ -406,6 +414,113 @@ function createErrorOverlay(field) {
 
   field.parentElement.style.position = 'relative';
   field.parentElement.insertBefore(overlay, field.nextSibling);
+}
+
+/**
+ * Создание индикатора статуса поля
+ */
+function createStatusIndicator(field) {
+  if (field.parentElement.querySelector('.grammar-status-indicator')) {
+    return;
+  }
+
+  const indicator = document.createElement('button');
+  indicator.type = 'button';
+  indicator.className = 'grammar-status-indicator';
+  indicator.title = 'Статус проверки текста';
+  indicator.dataset.fieldId = field.dataset.grammarCheckerId;
+  indicator.addEventListener('click', (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    openFieldStatusPopup(field, event.clientX, event.clientY);
+  });
+
+  const parentStyle = window.getComputedStyle(field.parentElement);
+  if (parentStyle.position === 'static') {
+    field.parentElement.style.position = 'relative';
+  }
+
+  field.parentElement.appendChild(indicator);
+  updateStatusIndicator(field);
+}
+
+/**
+ * Обновление состояния индикатора поля
+ */
+function updateStatusIndicator(field) {
+  const indicator = field.parentElement.querySelector('.grammar-status-indicator');
+  if (!indicator) return;
+
+  const fieldId = field.dataset.grammarCheckerId;
+  const corrections = currentCorrections.get(fieldId) || [];
+  const text = getFieldText(field).trim();
+  const hasText = text.length > 0;
+
+  if (!hasText) {
+    indicator.className = 'grammar-status-indicator no-text';
+    indicator.innerHTML = '<span class="status-dot status-none"></span>';
+    indicator.title = 'Введите текст, чтобы проверить ошибки';
+    return;
+  }
+
+  if (corrections.length > 0) {
+    indicator.className = 'grammar-status-indicator has-errors';
+    indicator.innerHTML = `<span class="status-dot status-error"></span><span class="status-count">${corrections.length}</span>`;
+    indicator.title = `Найдено ${corrections.length} ошибок. Нажмите, чтобы исправить всё.`;
+  } else {
+    indicator.className = 'grammar-status-indicator no-errors';
+    indicator.innerHTML = '<span class="status-dot status-ok"></span>';
+    indicator.title = 'Ошибок не найдено';
+  }
+}
+
+/**
+ * Открывает компактное всплывающее окно статуса поля
+ */
+function openFieldStatusPopup(field, x, y) {
+  const fieldId = field.dataset.grammarCheckerId;
+  const corrections = currentCorrections.get(fieldId) || [];
+
+  closeFloatingPopup();
+
+  const popup = document.createElement('div');
+  popup.className = 'grammar-field-status-popup';
+  popup.style.position = 'fixed';
+  popup.style.left = x + 'px';
+  popup.style.top = y + 'px';
+  popup.style.zIndex = '10001';
+
+  if (corrections.length === 0) {
+    popup.innerHTML = `
+      <div class="popup-header">
+        <span class="error-title">Ошибок не найдено</span>
+      </div>
+      <div class="popup-reason">Текст в поле проверен и выглядит корректно.</div>
+    `;
+  } else {
+    popup.innerHTML = `
+      <div class="popup-header">
+        <span class="error-title">Найдено ${corrections.length} ошибок</span>
+      </div>
+      <div class="popup-reason">Нажмите кнопку ниже, чтобы сразу исправить все найденные ошибки.</div>
+      <div class="popup-actions">
+        <button class="action-btn fix-all">Исправить всё</button>
+      </div>
+    `;
+    popup.querySelector('.fix-all').addEventListener('click', () => {
+      applyAllCorrections(field);
+      closeFloatingPopup();
+    });
+  }
+
+  document.body.appendChild(popup);
+  floatingPopup = popup;
+
+  document.addEventListener('click', (e) => {
+    if (!popup.contains(e.target) && e.target !== field) {
+      closeFloatingPopup();
+    }
+  }, { once: true });
 }
 
 /**
@@ -481,6 +596,7 @@ function applyCorrection(field, correction, suggestion) {
   // Очищаем кэш исправлений для этого поля
   const fieldId = field.dataset.grammarCheckerId;
   currentCorrections.delete(fieldId);
+  updateStatusIndicator(field);
 }
 
 /**
@@ -504,6 +620,7 @@ function applyAllCorrections(field) {
 
   setFieldText(field, text);
   currentCorrections.delete(fieldId);
+  updateStatusIndicator(field);
 }
 
 /**
@@ -531,6 +648,8 @@ function clearErrorsForField(field) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   }
+
+  updateStatusIndicator(field);
 }
 
 /**
