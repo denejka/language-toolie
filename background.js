@@ -17,8 +17,11 @@ const FREE_MODELS = [
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   try {
     if (request.action === 'checkText') {
+      console.log('Получено сообщение: checkText', { textLength: request.text.length, genre: request.genre });
+      
       checkTextWithAI(request.text, request.genre)
         .then(corrections => {
+          console.log('checkTextWithAI успешно:', { correctionsCount: corrections.length });
           try {
             sendResponse({ success: true, corrections });
           } catch (e) {
@@ -26,13 +29,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           }
         })
         .catch(error => {
+          console.error('checkTextWithAI ошибка:', error.message);
           try {
             sendResponse({ success: false, error: error.message });
           } catch (e) {
             console.error('Error sending error response:', e);
           }
         });
-      return true; // Сообщаем Chrome, что ответ отправится асинхронно
+      return true;
     }
 
     if (request.action === 'getModels') {
@@ -93,8 +97,16 @@ async function checkTextWithAI(text, genre = 'General') {
   const settings = await chrome.storage.sync.get(['apiKey', 'selectedModel', 'checkDepth', 'customPrompt']);
   
   if (!settings.apiKey) {
+    console.error('API ключ не установлен');
     throw new Error('API ключ не установлен. Пожалуйста, отрите настройки расширения.');
   }
+
+  console.log('checkTextWithAI запущен:', { 
+    hasApiKey: !!settings.apiKey, 
+    apiKeyLength: settings.apiKey.length,
+    genre, 
+    textLength: text.length 
+  });
 
   const model = settings.selectedModel || FREE_MODELS[0];
   const depth = settings.checkDepth || 2; // 1 = орфография, 2 = грамматика, 3 = полный анализ
@@ -113,12 +125,14 @@ async function checkTextWithAI(text, genre = 'General') {
 
   try {
     // Отправляем запрос к OpenRouter API
+    console.log('Отправляю запрос к OpenRouter API:', { model, textLength: text.length });
+    
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${settings.apiKey}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'AI-Grammar-Checker/1.0'
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         model: model,
@@ -137,14 +151,25 @@ async function checkTextWithAI(text, genre = 'General') {
       })
     });
 
+    console.log('Ответ API:', { status: response.status, statusText: response.statusText });
+
     if (!response.ok) {
+      let errorMessage = response.statusText;
       try {
-        const error = await response.json();
-        console.error('OpenRouter API ошибка:', error);
-        throw new Error(`API ошибка: ${error.error?.message || response.statusText}`);
-      } catch (e) {
-        throw new Error(`API ошибка: ${response.statusText}`);
+        const errorJson = await response.json().catch(() => ({}));
+        console.error('OpenRouter API ошибка (JSON):', errorJson);
+        errorMessage = errorJson.error?.message || errorJson.message || response.statusText;
+      } catch (parseErr) {
+        console.error('Не удалось спарсить ошибку API:', parseErr);
       }
+      
+      // Если это ошибка 405 или другая ошибка клиента, попробуем retry
+      if (response.status === 405 || response.status >= 400 && response.status < 500) {
+        console.log('Попытка retry из-за ошибки статуса:', response.status);
+        return await checkTextWithAIRetry(text, settings.apiKey, model);
+      }
+      
+      throw new Error(`API ошибка (${response.status}): ${errorMessage}`);
     }
 
     let data;
@@ -186,7 +211,18 @@ async function checkTextWithAI(text, genre = 'General') {
 
     return corrections;
   } catch (error) {
-    console.error('Ошибка проверки текста:', error);
+    console.error('checkTextWithAI ошибка:', error.message);
+    // Пробуем retry как последнюю попытку перед выбросом ошибки
+    try {
+      console.log('Финальная попытка через retry...');
+      const retryCorrections = await checkTextWithAIRetry(text, settings.apiKey, model);
+      if (retryCorrections && retryCorrections.length >= 0) {
+        return retryCorrections;
+      }
+    } catch (retryError) {
+      console.error('Retry также не удался:', retryError.message);
+    }
+    
     throw error;
   }
 }
@@ -199,11 +235,14 @@ async function checkTextWithAIRetry(text, apiKey, model) {
 {"corrections": [{"start": 0, "end": 5, "wrong": "текст", "suggestions": ["исправл"], "reason": "объяснение"}]}`;
 
   try {
+    console.log('Отправляю retry запрос к OpenRouter API:', { model, textLength: text.length });
+
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         model: model,
@@ -222,8 +261,10 @@ async function checkTextWithAIRetry(text, apiKey, model) {
       })
     });
 
+    console.log('Ответ retry API:', { status: response.status, statusText: response.statusText });
+
     if (!response.ok) {
-      console.error('Retry API call failed:', response.status);
+      console.error('Retry API call failed:', response.status, response.statusText);
       return [];
     }
     
