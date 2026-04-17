@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Grammar & Style Checker - Настройки</title>
+  <link rel="stylesheet" href="styles/options.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Заголовок -->
+    <header class="header">
+      <h1 class="header-title">Настройки AI Grammar & Style Checker</h1>
+      <p class="header-subtitle">Все настройки сохраняются автоматически</p>
+    </header>
+
+    <!-- Навигация закладок -->
+    <nav class="tabs-nav">
+      <button class="tab-button active" data-tab="account">
+        <span class="tab-icon">🔑</span>
+        <span class="tab-label">Аккаунт</span>
+      </button>
+      <button class="tab-button" data-tab="checking">
+        <span class="tab-icon">✓</span>
+        <span class="tab-label">Проверка</span>
+      </button>
+      <button class="tab-button" data-tab="exceptions">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-label">Исключения</span>
+      </button>
+    </nav>
+
+    <!-- Содержимое закладок -->
+    <div class="tabs-content">
+      <!-- Вкладка: Аккаунт -->
+      <div class="tab-pane active" id="account">
+        <div class="settings-group">
+          <h2 class="group-title">OpenRouter API</h2>
+          
+          <!-- API Key -->
+          <div class="setting-field">
+            <label for="api-key" class="field-label">
+              API Key
+              <span class="label-hint">Получить на openrouter.io</span>
+            </label>
+            <div class="api-key-container">
+              <input
+                type="password"
+                id="api-key"
+                class="text-input password-input"
+                placeholder="sk-or-..."
+                autocomplete="off"
+              >
+              <button id="toggle-api-visibility" class="icon-button" title="Показать/скрыть">
+                👁️
+              </button>
+            </div>
+            <span class="field-help">Ваш ключ хранится только локально в браузере</span>
+          </div>
+
+          <!-- Статус соединения -->
+          <button id="test-connection" class="btn btn-secondary">
+            <span class="btn-label">Проверить соединение</span>
+            <span class="connection-status"></span>
+          </button>
+          <div id="connection-message" class="connection-message"></div>
+        </div>
+
+        <div class="settings-group">
+          <h2 class="group-title">Выбор модели</h2>
+          
+          <!-- Выпадающий список моделей -->
+          <div class="setting-field">
+            <label for="model-select" class="field-label">Модель нейросети</label>
+            <div class="model-select-container">
+              <select id="model-select" class="select-input">
+                <option value="">Загрузка моделей...</option>
+              </select>
+              <button id="refresh-models" class="icon-button" title="Обновить список">
+                🔄
+              </button>
+            </div>
+            <span class="field-help">Список содержит только бесплатные модели (:free)</span>
+          </div>
+
+          <!-- Информация о модели -->
+          <div id="model-info" class="model-info">
+            <p id="model-description"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Вкладка: Проверка -->
+      <div class="tab-pane" id="checking">
+        <div class="settings-group">
+          <h2 class="group-title">Параметры проверки</h2>
+
+          <!-- Глубина проверки (Ползунок) -->
+          <div class="setting-field">
+            <label for="check-depth" class="field-label">
+              Уровень глубины проверки
+              <span id="depth-label" class="label-value">(Стандартная)</span>
+            </label>
+            <div class="slider-container">
+              <span class="slider-label">Орфография</span>
+              <input
+                type="range"
+                id="check-depth"
+                min="1"
+                max="3"
+                value="2"
+                class="slider"
+              >
+              <span class="slider-label">Полный анализ</span>
+            </div>
+            <span class="field-help">
+              <strong>1:</strong> Только орфография | 
+              <strong>2:</strong> Грамматика и пунктуация | 
+              <strong>3:</strong> Полный анализ + логика
+            </span>
+          </div>
+
+          <!-- Язык интерфейса -->
+          <div class="setting-field">
+            <label for="interface-language" class="field-label">Язык интерфейса подсказок</label>
+            <select id="interface-language" class="select-input">
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
+          <!-- Жанр текста -->
+          <div class="setting-field">
+            <label for="text-genre" class="field-label">Жанр текста (контекст проверки)</label>
+            <select id="text-genre" class="select-input">
+              <option value="General">Общий текст</option>
+              <option value="Academic">Деловая переписка / Эссе</option>
+              <option value="Creative">Творческий текст</option>
+            </select>
+          </div>
+
+          <!-- Расширенные параметры -->
+          <div class="advanced-section">
+            <button class="btn-collapse" id="advanced-toggle">
+              <span class="collapse-icon">▶</span>
+              <span>Расширенные параметры</span>
+            </button>
+            
+            <div id="advanced-content" class="collapse-content" style="display: none;">
+              <!-- Минимальная длина текста -->
+              <div class="setting-field">
+                <label for="min-text-length" class="field-label">Минимальная длина текста для проверки</label>
+                <div class="input-with-unit">
+                  <input
+                    type="number"
+                    id="min-text-length"
+                    min="1"
+                    max="200"
+                    value="4"
+                    class="number-input"
+                  >
+                  <span class="unit">символов</span>
+                </div>
+              </div>
+
+              <!-- Дебаунс (задержка) -->
+              <div class="setting-field">
+                <label for="debounce-delay" class="field-label">Задержка перед отправкой запроса</label>
+                <div class="input-with-unit">
+                  <input
+                    type="number"
+                    id="debounce-delay"
+                    min="100"
+                    max="2000"
+                    step="100"
+                    value="600"
+                    class="number-input"
+                  >
+                  <span class="unit">мс</span>
+                </div>
+              </div>
+
+              <!-- Максимум символов в запросе -->
+              <div class="setting-field">
+                <label for="max-text-length" class="field-label">Максимум символов в одном запросе</label>
+                <div class="input-with-unit">
+                  <input
+                    type="number"
+                    id="max-text-length"
+                    min="500"
+                    max="10000"
+                    step="500"
+                    value="4000"
+                    class="number-input"
+                  >
+                  <span class="unit">символов</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Пользовательский промпт -->
+        <div class="settings-group">
+          <h2 class="group-title">Пользовательский промпт (опционально)</h2>
+          <p class="group-hint">Оставьте пустым, чтобы использовать стандартный промпт. Используйте {{TEXT}} как плейсхолдер для текста.</p>
+          
+          <textarea
+            id="custom-prompt"
+            class="textarea-input"
+            placeholder="Оставьте пустым для использования стандартного промпта..."
+            rows="6"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Вкладка: Исключения -->
+      <div class="tab-pane" id="exceptions">
+        <div class="settings-group">
+          <h2 class="group-title">Управление сайтами</h2>
+
+          <!-- Глобальное включение/отключение -->
+          <div class="setting-field toggle-field">
+            <label for="extension-enabled" class="field-label">Показывать расширение</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="extension-enabled" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Белый список сайтов -->
+          <div class="setting-field">
+            <label for="whitelist-sites" class="field-label">Сайты без проверки</label>
+            <p class="field-help">Введите домены через запятую (например: gmail.com, facebook.com)</p>
+            <textarea
+              id="whitelist-sites"
+              class="textarea-input"
+              placeholder="Домены без проверки..."
+              rows="4"
+            ></textarea>
+            <span class="field-help">Расширение выключится на указанных сайтах</span>
+          </div>
+        </div>
+
+        <!-- Игнорируемые правила -->
+        <div class="settings-group">
+          <h2 class="group-title">Исключаемые проверки</h2>
+          <p class="group-hint">Отметьте правила, которые нужно пропускать</p>
+
+          <div class="checkboxes-group">
+            <label class="checkbox-label">
+              <input type="checkbox" class="ignore-rule" value="caps-lock">
+              <span class="checkbox-custom"></span>
+              <span>Не проверять CAPS LOCK</span>
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" class="ignore-rule" value="urls">
+              <span class="checkbox-custom"></span>
+              <span>Не проверять URL ссылки</span>
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" class="ignore-rule" value="code">
+              <span class="checkbox-custom"></span>
+              <span>Не проверять код (в backticks)</span>
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" class="ignore-rule" value="email">
+              <span class="checkbox-custom"></span>
+              <span>Не проверять email адреса</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Кнопка сброса -->
+        <div class="settings-group action-group">
+          <button id="reset-settings" class="btn btn-danger">
+            <span class="btn-label">Сбросить все настройки</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>v1.0.0 • Версия: <span id="extension-version">1.0.0</span></p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

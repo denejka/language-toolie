@@ -1,0 +1,58 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# Операционные системы
+.DS_Store
+Thumbs.db
+.windows
+.env.local
+
+# Зависимости
+node_modules/
+package-lock.json
+yarn.lock
+
+# Логи
+*.log
+logs/
+debug.log
+
+# Временные файлы
+.tmp/
+temp/
+*.bak
+
+# Сборка/Дистрибуция
+dist/
+build/
+*.zip
+*.crx
+*.pem
+
+# Тестирование
+coverage/
+.nyc_output/
+test-results/
+
+# API ключи и конфиденциальные данные
+.env
+.env.local
+.env.*.local
+secrets.json
+api-keys.txt
+
+# Кэш
+.cache/
+.eslintcache
+
+# Другое
+*.DS_Store
+.AppleDouble
+.LSOverride
+._*

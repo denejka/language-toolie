@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Grammar & Style Checker</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Заголовок -->
+    <div class="popup-header">
+      <h2 class="popup-title">AI Grammar & Style</h2>
+      <div class="extension-status">
+        <div class="status-indicator" id="status-indicator"></div>
+        <span class="status-text" id="status-text">Активно</span>
+      </div>
+    </div>
+
+    <!-- Основное содержимое -->
+    <div class="popup-content">
+      <!-- Статистика -->
+      <div class="stats-card">
+        <div class="stat-item">
+          <span class="stat-label">Проверено текстовых полей</span>
+          <span class="stat-value" id="fields-count">0</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Найдено ошибок</span>
+          <span class="stat-value" id="errors-count">0</span>
+        </div>
+      </div>
+
+      <!-- Статус расширения -->
+      <div class="settings-preview">
+        <div class="preview-item">
+          <span class="preview-label">Модель</span>
+          <span class="preview-value" id="current-model">Загрузка...</span>
+        </div>
+        <div class="preview-item">
+          <span class="preview-label">Уровень проверки</span>
+          <span class="preview-value" id="current-depth">Стандартная</span>
+        </div>
+      </div>
+
+      <!-- Быстрые действия -->
+      <div class="quick-actions">
+        <button id="toggle-extension" class="quick-action-btn active">
+          <span class="btn-icon">✓</span>
+          <span class="btn-text">Включить</span>
+        </button>
+        <button id="clear-cache" class="quick-action-btn">
+          <span class="btn-icon">🗑</span>
+          <span class="btn-text">Чистка</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Навigation -->
+    <div class="popup-footer">
+      <button id="open-settings" class="footer-link">
+        <span>⚙️ Настройки</span>
+      </button>
+      <button id="open-help" class="footer-link">
+        <span>❓ Помощь</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

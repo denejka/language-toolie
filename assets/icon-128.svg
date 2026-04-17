@@ -1,0 +1,25 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Фон -->
+  <rect width="128" height="128" rx="32" fill="url(#gradient)"/>
+  
+  <!-- Градиент -->
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#6200EE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00D084;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Проверка (галочка) + текст -->
+  <g transform="translate(64, 64)">
+    <!-- Волнистая линия (буква А с подчеркиванием) -->
+    <path d="M-20 -15 L-10 5 L0 -15 L10 5 L20 -15" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Галочка (проверка) -->
+    <path d="M-5 10 L0 15 L8 7" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Точки (акцент) -->
+    <circle cx="-25" cy="0" r="2" fill="white" opacity="0.8"/>
+    <circle cx="25" cy="0" r="2" fill="white" opacity="0.8"/>
+  </g>
+</svg>

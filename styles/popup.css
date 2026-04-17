@@ -1,0 +1,354 @@
+/**
+ * popup.css - Стили для всплывающего меню расширения (Material Design 3)
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 360px;
+  min-height: 420px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+  color: #1F1F1F;
+  overflow: hidden;
+}
+
+/* ==================== Контейнер ====================  */
+
+.popup-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+}
+
+/* ==================== Заголовок ====================  */
+
+.popup-header {
+  padding: 16px 20px;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.popup-title {
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6200EE 0%, #00D084 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.3px;
+}
+
+.extension-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #BDBDBD;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.active {
+  background: #4CAF50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.inactive {
+  background: #EF5350;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(76, 175, 80, 1);
+  }
+}
+
+/* ==================== Содержимое ====================  */
+
+.popup-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Скрывает скролл-бар */
+.popup-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.popup-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.popup-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.popup-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== Карточка статистики ====================  */
+
+.stats-card {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-item {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.stat-divider {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #999999;
+  font-weight: 500;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6200EE 0%, #00D084 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ==================== Превью настроек ====================  */
+
+.settings-preview {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.preview-item:not(:last-child) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.preview-label {
+  color: #666666;
+  font-weight: 500;
+}
+
+.preview-value {
+  background: linear-gradient(135deg, #6200EE 0%, #00D084 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 600;
+  max-width: 150px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==================== Быстрые действия ====================  */
+
+.quick-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.quick-action-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #DADADA;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #666666;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.quick-action-btn:hover {
+  background: rgba(98, 0, 238, 0.04);
+  border-color: #6200EE;
+  color: #6200EE;
+}
+
+.quick-action-btn.active {
+  background: linear-gradient(135deg, #E8F4FF 0%, #E1ECFF 100%);
+  border-color: #B3D9FF;
+  color: #1565C0;
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+.btn-text {
+  display: block;
+}
+
+/* ==================== Footer ====================  */
+
+.popup-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: white;
+  display: flex;
+  gap: 8px;
+}
+
+.footer-link {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #F0F4FF 0%, #E8F4FF 100%);
+  color: #1565C0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.footer-link:hover {
+  background: linear-gradient(135deg, #E0E8FF 0%, #D8E8FF 100%);
+  box-shadow: 0 2px 4px rgba(21, 101, 192, 0.15);
+}
+
+.footer-link:active {
+  transform: scale(0.98);
+}
+
+/* ==================== Темная тема ====================  */
+
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background: linear-gradient(135deg, #121212 0%, #1A1A1A 100%);
+    color: #E4E4E4;
+  }
+
+  .popup-container {
+    background: linear-gradient(135deg, #121212 0%, #1A1A1A 100%);
+  }
+
+  .popup-header {
+    background: #1F1F1F;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .stats-card,
+  .settings-preview,
+  .quick-action-btn {
+    background: #2A2A2A;
+    border-color: #404040;
+    color: #E4E4E4;
+  }
+
+  .stat-divider {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .preview-label {
+    color: #999999;
+  }
+
+  .footer-link {
+    background: linear-gradient(135deg, #1A3A5F 0%, #1A3A5F 100%);
+    color: #90CAF9;
+  }
+
+  .footer-link:hover {
+    background: linear-gradient(135deg, #2A4A7F 0%, #2A4A7F 100%);
+  }
+
+  .popup-footer {
+    background: #1F1F1F;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .popup-content {
+    color: #E4E4E4;
+  }
+}
+
+/* ==================== Анимация загрузки ====================  */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.loading {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.1),
+    rgba(0, 0, 0, 0.2),
+    rgba(0, 0, 0, 0.1)
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
