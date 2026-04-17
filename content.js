@@ -58,6 +58,19 @@ function initializeTextFields() {
   });
 }
 
+// Инициализация при загрузке страницы
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeTextFields);
+} else {
+  initializeTextFields();
+}
+
+// Дополнительная инициализация через 1 секунду для динамических сайтов типа Gmail
+setTimeout(initializeTextFields, 1000);
+
+// Еще одна инициализация через 3 секунды
+setTimeout(initializeTextFields, 3000);
+
 /**
  * Обработка ввода в текстовое поле (с дебаунсом)
  */
@@ -192,12 +205,26 @@ async function checkText(text, field) {
     chrome.runtime.sendMessage(
       { action: 'checkText', text: text, genre: 'General' },
       (response) => {
+        // Проверяем наличие runtime.lastError
+        if (chrome.runtime.lastError) {
+          console.error('Runtime error:', chrome.runtime.lastError.message);
+          hideLoadingIndicator(field);
+          return;
+        }
+
+        // Проверяем наличие ответа
+        if (!response) {
+          console.error('Ошибка: нет ответа от background script');
+          hideLoadingIndicator(field);
+          return;
+        }
+
         if (response.success) {
-          currentCorrections.set(fieldId, response.corrections);
+          currentCorrections.set(fieldId, response.corrections || []);
           showErrorHighlight(field);
         } else {
           console.error('Ошибка проверки:', response.error);
-          showErrorNotification(field, response.error);
+          showErrorNotification(field, response.error || 'Неизвестная ошибка');
         }
         hideLoadingIndicator(field);
       }
@@ -486,8 +513,6 @@ function openFieldStatusPopup(field, x, y) {
   const popup = document.createElement('div');
   popup.className = 'grammar-field-status-popup';
   popup.style.position = 'fixed';
-  popup.style.left = x + 'px';
-  popup.style.top = y + 'px';
   popup.style.zIndex = '10001';
 
   if (corrections.length === 0) {
@@ -516,11 +541,51 @@ function openFieldStatusPopup(field, x, y) {
   document.body.appendChild(popup);
   floatingPopup = popup;
 
+  // Корректируем позицию, чтобы popup не выходил за границы viewport
+  adjustPopupPosition(popup, x, y);
+
   document.addEventListener('click', (e) => {
     if (!popup.contains(e.target) && e.target !== field) {
       closeFloatingPopup();
     }
   }, { once: true });
+}
+
+/**
+ * Регулировка позиции popup, чтобы не выходил за рамки viewport
+ */
+function adjustPopupPosition(popup, x, y) {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const popupWidth = popup.offsetWidth || 280;
+  const popupHeight = popup.offsetHeight || 150;
+  const margin = 10;
+
+  let left = x;
+  let top = y;
+
+  // Проверяем границы справа
+  if (left + popupWidth + margin > viewportWidth) {
+    left = Math.max(margin, viewportWidth - popupWidth - margin);
+  }
+
+  // Проверяем границы слева
+  if (left < margin) {
+    left = margin;
+  }
+
+  // Проверяем границы снизу
+  if (top + popupHeight + margin > viewportHeight) {
+    top = Math.max(margin, viewportHeight - popupHeight - margin);
+  }
+
+  // Проверяем границы сверху
+  if (top < margin) {
+    top = margin;
+  }
+
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
 }
 
 /**
@@ -532,8 +597,6 @@ function showFloatingPopup(field, correction, x, y) {
   const popup = document.createElement('div');
   popup.className = 'grammar-floating-popup';
   popup.style.position = 'fixed';
-  popup.style.left = x + 'px';
-  popup.style.top = (y + 20) + 'px';
   popup.style.zIndex = '10000';
 
   popup.innerHTML = `
@@ -556,6 +619,9 @@ function showFloatingPopup(field, correction, x, y) {
 
   document.body.appendChild(popup);
   floatingPopup = popup;
+
+  // Корректируем позицию
+  adjustPopupPosition(popup, x, y + 20);
 
   // Добавляем обработчики событий
   popup.querySelectorAll('.suggestion-btn').forEach(btn => {
@@ -743,7 +809,20 @@ const observer = new MutationObserver((mutations) => {
   }
 });
 
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
-});
+// Инициализируем MutationObserver только если document.body готов
+if (document.body) {
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+} else {
+  // Если document.body еще не готов, ждем загрузки
+  document.addEventListener('DOMContentLoaded', () => {
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    }
+  });
+}

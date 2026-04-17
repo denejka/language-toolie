@@ -15,25 +15,70 @@ const FREE_MODELS = [
 
 // Слушаем сообщения от content-скрипта
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'checkText') {
-    checkTextWithAI(request.text, request.genre)
-      .then(corrections => sendResponse({ success: true, corrections }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true; // Сообщаем Chrome, что ответ отправится асинхронно
-  }
+  try {
+    if (request.action === 'checkText') {
+      checkTextWithAI(request.text, request.genre)
+        .then(corrections => {
+          try {
+            sendResponse({ success: true, corrections });
+          } catch (e) {
+            console.error('Error sending checkText response:', e);
+          }
+        })
+        .catch(error => {
+          try {
+            sendResponse({ success: false, error: error.message });
+          } catch (e) {
+            console.error('Error sending error response:', e);
+          }
+        });
+      return true; // Сообщаем Chrome, что ответ отправится асинхронно
+    }
 
-  if (request.action === 'getModels') {
-    getAvailableModels()
-      .then(models => sendResponse({ success: true, models }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true;
-  }
+    if (request.action === 'getModels') {
+      getAvailableModels()
+        .then(models => {
+          try {
+            sendResponse({ success: true, models });
+          } catch (e) {
+            console.error('Error sending getModels response:', e);
+          }
+        })
+        .catch(error => {
+          try {
+            sendResponse({ success: false, error: error.message });
+          } catch (e) {
+            console.error('Error sending error response:', e);
+          }
+        });
+      return true;
+    }
 
-  if (request.action === 'testConnection') {
-    testOpenRouterConnection(request.apiKey)
-      .then(() => sendResponse({ success: true }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true;
+    if (request.action === 'testConnection') {
+      testOpenRouterConnection(request.apiKey)
+        .then(() => {
+          try {
+            sendResponse({ success: true });
+          } catch (e) {
+            console.error('Error sending testConnection response:', e);
+          }
+        })
+        .catch(error => {
+          try {
+            sendResponse({ success: false, error: error.message });
+          } catch (e) {
+            console.error('Error sending error response:', e);
+          }
+        });
+      return true;
+    }
+  } catch (e) {
+    console.error('Message handler error:', e);
+    try {
+      sendResponse({ success: false, error: e.message });
+    } catch (err) {
+      console.error('Could not send error response:', err);
+    }
   }
 });
 
@@ -72,8 +117,8 @@ async function checkTextWithAI(text, genre = 'General') {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${settings.apiKey}`,
-        'HTTP-Reflex-Partition': 'free',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'AI-Grammar-Checker/1.0'
       },
       body: JSON.stringify({
         model: model,
@@ -87,19 +132,31 @@ async function checkTextWithAI(text, genre = 'General') {
             content: prompt.replace('{{TEXT}}', text)
           }
         ],
-        temperature: 0.3, // Низкая температура для большей консистентности
+        temperature: 0.3,
         max_tokens: 4000
       })
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenRouter API ошибка:', error);
-      throw new Error(`API ошибка: ${error.error?.message || response.statusText}`);
+      try {
+        const error = await response.json();
+        console.error('OpenRouter API ошибка:', error);
+        throw new Error(`API ошибка: ${error.error?.message || response.statusText}`);
+      } catch (e) {
+        throw new Error(`API ошибка: ${response.statusText}`);
+      }
     }
 
-    const data = await response.json();
-    const content = data.choices[0].message.content;
+    let data;
+    let content;
+    try {
+      data = await response.json();
+      content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error('No content in response');
+    } catch (e) {
+      console.error('Failed to parse API response:', e);
+      throw new Error('Ошибка парсинга ответа API');
+    }
 
     // Парсим JSON ответ (с fallback в случае ошибки)
     let corrections = [];
@@ -110,12 +167,13 @@ async function checkTextWithAI(text, genre = 'General') {
         const parsed = JSON.parse(jsonMatch[0]);
         corrections = parsed.corrections || [];
       } else {
-        console.warn('JSON не найден в ответе AI');
+        console.warn('JSON не найден в ответе AI, возвращаем пустой массив');
+        corrections = [];
       }
     } catch (e) {
-      console.error('Ошибка парсинга JSON:', e);
-      // Пытаемся еще раз с более строгим промптом
-      return await checkTextWithAIRetry(text, settings.apiKey, model);
+      console.error('Ошибка парсинга JSON из ответа AI:', e);
+      console.log('Ответ от AI:', content);
+      corrections = [];
     }
 
     // Валидируем исправления
@@ -137,8 +195,8 @@ async function checkTextWithAI(text, genre = 'General') {
  * Повторный запрос с более строгим промптом (fallback)
  */
 async function checkTextWithAIRetry(text, apiKey, model) {
-  const strictPrompt = `Проанализируй текст. Ответ ТОЛЬКО в этом формате JSON, включая пунктуацию и знаки препинания:
-{"corrections": [{"start": 0, "end": 5, "wrong": "text", "suggestions": ["fix"], "reason": "rule"}]}`;
+  const strictPrompt = `Проанализируй текст и верни JSON:
+{"corrections": [{"start": 0, "end": 5, "wrong": "текст", "suggestions": ["исправл"], "reason": "объяснение"}]}`;
 
   try {
     const response = await fetch(OPENROUTER_API_URL, {
@@ -149,29 +207,43 @@ async function checkTextWithAIRetry(text, apiKey, model) {
       },
       body: JSON.stringify({
         model: model,
-        messages: [{
-          role: 'user',
-          content: strictPrompt + '\n\nТекст: ' + text
-        }],
+        messages: [
+          {
+            role: 'system',
+            content: 'Ты филолог. Отвечай ТОЛЬКО JSON.'
+          },
+          {
+            role: 'user',
+            content: strictPrompt + '\n\nТекст: ' + text
+          }
+        ],
         temperature: 0.1,
         max_tokens: 2000
       })
     });
 
-    if (!response.ok) throw new Error('Retry failed');
+    if (!response.ok) {
+      console.error('Retry API call failed:', response.status);
+      return [];
+    }
     
     const data = await response.json();
-    const content = data.choices[0].message.content;
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      console.warn('No content in retry response');
+      return [];
+    }
     
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       return parsed.corrections || [];
     }
     
+    console.warn('No JSON found in retry response');
     return [];
   } catch (e) {
-    console.error('Retry не удался:', e);
+    console.error('Retry ошибка:', e.message);
     return [];
   }
 }
